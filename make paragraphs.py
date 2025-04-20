@@ -1,6 +1,6 @@
 import warnings
+import re
 from deepmultilingualpunctuation import PunctuationModel
-from wtpsplit import SaT
 from sentence_transformers import SentenceTransformer, util
 
 # Отключение предупреждений
@@ -8,7 +8,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 # Инициализация моделей один раз
 punct_model = PunctuationModel()
-segmenter = SaT("sat-3l")  # Убедитесь, что модель 'sat-3l' установлена и доступна
 semantic_model = SentenceTransformer(
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )
@@ -21,54 +20,50 @@ def make_punctuation(text: str) -> str:
     return punct_model.restore_punctuation(text)
 
 
-def flatten_sentences(sentences):
+def split_sentences_regex(text: str) -> list[str]:
     """
-    Рекурсивно выравнивает вложенные списки предложений в один список.
+    Простейшее разбиение текста на предложения по точкам, восклицательным и вопросительным знакам.
+    Не разрывает по запятым.
     """
-    flat = []
-    for s in sentences:
-        if isinstance(s, list):
-            flat.extend(flatten_sentences(s))
-        elif isinstance(s, dict) and 'sentences' in s:
-            flat.extend(flatten_sentences(s['sentences']))
-        elif isinstance(s, dict) and 'sentence' in s:
-            flat.append(s['sentence'])
-        else:
-            flat.append(s)
-    return flat
+    # Удаляем переводы строк внутри абзаца
+    text = text.replace("\n", " ")
+    # Разделяем по завершённым предложениям
+    sentences = re.split(r'(?<=[\.\!\?])\s+', text)
+    return [s.strip() for s in sentences if s.strip()]
 
 
 def make_semantic_paragraphs(
-    sentences: list[str], model: SentenceTransformer, threshold: float = 0.75
+    sentences: list[str], model: SentenceTransformer, threshold: float = 0.75, min_sentences: int = 2
 ) -> list[str]:
     """
     Группирует предложения в абзацы по семантической близости.
-    sentences: список уже сегментированных предложений.
-    threshold: порог косинусной близости (0-1).
+    sentences: список предложений, каждое заканчивается точкой, ! или ?.
+    threshold: порог косинусной близости (0-1) для разделения.
+    min_sentences: минимальное число предложений в абзаце.
     """
-    # Выравниваем и очищаем список
-    flat = flatten_sentences(sentences)
-    clean_sentences = [str(s).strip() for s in flat if s and len(str(s).strip()) > 2]
-    if not clean_sentences:
+    clean = [s for s in sentences if len(s) > 3]
+    if not clean:
         return []
 
-    embeddings = model.encode(clean_sentences, convert_to_tensor=True)
+    embeddings = model.encode(clean, convert_to_tensor=True)
     paragraphs = []
-    current = [clean_sentences[0]]
+    current = [clean[0]]
 
-    for prev_idx, curr_idx in zip(range(len(clean_sentences) - 1), range(1, len(clean_sentences))):
-        sim = util.cos_sim(embeddings[prev_idx], embeddings[curr_idx]).item()
-        if sim < threshold:
+    for i in range(1, len(clean)):
+        sim = util.cos_sim(embeddings[i - 1], embeddings[i]).item()
+        # Разрываем, только если семантическая дистанция велика и в текущем абзаце уже минимум предложений
+        if sim < threshold and len(current) >= min_sentences:
             paragraphs.append(" ".join(current))
-            current = [clean_sentences[curr_idx]]
+            current = [clean[i]]
         else:
-            current.append(clean_sentences[curr_idx])
+            current.append(clean[i])
+
+    # Добавляем последний абзац
     paragraphs.append(" ".join(current))
     return paragraphs
 
 
 if __name__ == "__main__":
-    # Путь к файлу для чтения
     input_path = "/home/rostislav/python/note maker/Useful files/texts/draft_text.txt"
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
@@ -76,19 +71,14 @@ if __name__ == "__main__":
     except FileNotFoundError:
         raise SystemExit(f"Файл не найден: {input_path}")
 
-    # Шаг 1: восстановление пунктуации
+    # Восстанавливаем пунктуацию
     punctuated = make_punctuation(raw_text)
 
-    # Шаг 2: разбиение на предложения
-    sentences = segmenter.split(punctuated, do_paragraph_segmentation=True)
-    # Приведение к плоскому списку строк
-    if isinstance(sentences, dict) and 'sentences' in sentences:
-        sentences = sentences['sentences']
-    sentences = flatten_sentences(sentences)
+    # Разбиваем на предложения по точкам, ?, !
+    sentences = split_sentences_regex(punctuated)
 
-    # Шаг 3: семантическое объединение в абзацы
-    paragraphs = make_semantic_paragraphs(sentences, semantic_model)
+    # Семантическое объединение
+    paragraphs = make_semantic_paragraphs(sentences, semantic_model, threshold=0.75, min_sentences=2)
 
-    # Вывод результатов
     for para in paragraphs:
         print(para)
