@@ -1,41 +1,55 @@
 import subprocess
 
+import GLOBAL
 
-def recording_and_recognize():
+def run_recording_and_recognition():
     try:
-        subprocess.run(['python', 'recording.py'], check=True)
+        # Отдельная обработка KeyboardInterrupt на этапе записи
+        try:
+            subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recording.py'], check=True)
+        except KeyboardInterrupt:
+            print("Запись прервана пользователем.")
+            return  # Прекратить выполнение распознавания
+
+        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recognize.py'], check=True)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Ошибка выполнения: {e}")
     except KeyboardInterrupt:
-        pass
-    subprocess.run(['python', 'recognize.py'])
+        print("Операция прервана пользователем.")
 
 
-def recording_and_recognize_in_real_time():
+def run_realtime_recording_and_recognition():
     try:
-        subprocess.run(['python', 'recording and recognition in real time.py'], check=True)
+        subprocess.run(GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, ['python', 'recording_and_recognition_realtime.py'], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Ошибка выполнения: {e}")
     except KeyboardInterrupt:
-        pass
+        print("Операция прервана пользователем.")
 
 
 def main() -> int:
     try:
-        key = int(input())
+        key = int(input("Выберите режим:\n"
+                        "1 — записать и затем распознать\n"
+                        "2 — запись и распознавание в реальном времени\n"
+                        "Ваш выбор: "))
 
         match key:
             case 1:
-                recording_and_recognize()
+                run_recording_and_recognition()
             case 2:
-                recording_and_recognize_in_real_time()
+                run_realtime_recording_and_recognition()
             case _:
-                print("Нажмите 1 или 2:")
+                print("Ошибка: Введите 1 или 2.")
                 return 1
     except ValueError:
-        print("Ошибка: Введите число 1 или 2")
+        print("Ошибка: Введите число (1 или 2).")
         return 1
 
     return 0
 
 
-print("Записать и после распознать (нажмите 1) или записывать и распознавать в реальном времени (нажмите 2):")
-
-while main() != 0:
-    pass
+if __name__ == "__main__":
+    while main() != 0:
+        pass

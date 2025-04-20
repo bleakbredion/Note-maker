@@ -8,9 +8,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 # Инициализация моделей один раз
 punct_model = PunctuationModel()
-semantic_model = SentenceTransformer(
-    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-)
+semantic_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
 
 def make_punctuation(text: str) -> str:
@@ -22,14 +20,22 @@ def make_punctuation(text: str) -> str:
 
 def split_sentences_regex(text: str) -> list[str]:
     """
-    Простейшее разбиение текста на предложения по точкам, восклицательным и вопросительным знакам.
-    Не разрывает по запятым.
+    Разбиение текста на предложения по ., !, ?.
+    Переводы строк удаляются. Начало каждого предложения приводится к заглавной букве.
     """
-    # Удаляем переводы строк внутри абзаца
     text = text.replace("\n", " ")
-    # Разделяем по завершённым предложениям
     sentences = re.split(r'(?<=[\.\!\?])\s+', text)
-    return [s.strip() for s in sentences if s.strip()]
+    
+    result = []
+    for s in sentences:
+        s = s.strip()
+        if not s:
+            continue
+        # Преобразуем первую букву в заглавную, оставляя остальное без изменений
+        s = s[0].upper() + s[1:] if s else s
+        result.append(s)
+    
+    return result
 
 
 def make_semantic_paragraphs(
