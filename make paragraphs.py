@@ -1,7 +1,9 @@
+from GLOBAL import DRAFT_TEXT_PATH, STRUCTURED_TEXT_PATH
 import warnings
 import re
 from deepmultilingualpunctuation import PunctuationModel
 from sentence_transformers import SentenceTransformer, util
+import sys
 
 # Отключение предупреждений
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -15,6 +17,8 @@ def make_punctuation(text: str) -> str:
     """
     Восстанавливает знаки препинания в тексте с помощью модели.
     """
+    if not text.strip():
+        return ""
     return punct_model.restore_punctuation(text)
 
 
@@ -69,8 +73,11 @@ def make_semantic_paragraphs(
     return paragraphs
 
 
-if __name__ == "__main__":
-    input_path = "/home/rostislav/python/note maker/Useful files/texts/draft_text.txt"
+
+def make_paragraphs(
+    input_path=DRAFT_TEXT_PATH, 
+    output_path=STRUCTURED_TEXT_PATH
+    ):
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
             raw_text = f.read()
@@ -86,5 +93,21 @@ if __name__ == "__main__":
     # Семантическое объединение
     paragraphs = make_semantic_paragraphs(sentences, semantic_model, threshold=0.75, min_sentences=2)
 
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write("\n".join(paragraphs))
+
+
+if __name__ == "__main__" and "--no-main" not in sys.argv:
+    #INPUT_PATH = "/home/rostislav/python/note maker/Useful files/texts/draft_text.txt"
+    INPUT_PATH = DRAFT_TEXT_PATH
+    OUTPUT_PATH = STRUCTURED_TEXT_PATH
+    make_paragraphs(INPUT_PATH, OUTPUT_PATH)
+
+    print("Структурированный текст сохранен в:", OUTPUT_PATH)
+
     for para in paragraphs:
         print(para)
+
+else:
+    make_paragraphs()
+    print("Структурированный текст сохранен в:", STRUCTURED_TEXT_PATH)

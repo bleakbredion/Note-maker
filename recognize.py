@@ -1,33 +1,31 @@
-#import speech_recognition as speech_rg
+from GLOBAL import DRAFT_TEXT_PATH, AUDIO_OUTPUT_PATH
 import whisper
+import warnings
+import sys
 
-INFILENAME = 'output.wav'
-#INFILENAME = "/home/rostislav/python/speech recognition/Useful files/Яна монолог.wav"
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU")
 
-def recognize_by_google():
 
-    # Распознавание речи
-    r = speech_rg.Recognizer()
+#INFILENAME = 'output.wav'
+INFILENAME = AUDIO_OUTPUT_PATH
+OUTFILENAME = DRAFT_TEXT_PATH
 
-    # Открываем WAV файл для распознавания
-    with speech_rg.AudioFile(INFILENAME) as audio_file:
-        r.adjust_for_ambient_noise(audio_file)  # Подстроиться под фоновый шум
-        content = r.record(audio_file)  # Считываем содержимое
-        try:
-            # Распознаем речь
-            print("Start recognized")
-            recognized_text = r.recognize_google(content, language="ru-RU")
-            print("Recognized text:\n", recognized_text)
-        except speech_rg.UnknownValueError:
-            print("Google Speech Recognition не смог распознать аудио")
-        except speech_rg.RequestError as e:
-            print(f"Не удалось запросить результаты от Google Speech Recognition; {e}")
-
-def recognize_by_whisper(model_name="base"):
+def recognizing_by_whisper(model_name="base", in_file_name='output.wav', out_file_name='output.txt'):
     print("Распознание начато")
     model = whisper.load_model(model_name)
-    result = model.transcribe(INFILENAME, language="ru")
-    print("Распознанный текст:", result["text"])
+    result = model.transcribe(in_file_name, language="ru")
 
-recognize_by_whisper()
-#recognize_by_google()
+    with open(OUTFILENAME, 'w', encoding='utf-8') as f:
+        f.write(result["text"])
+        
+    return result["text"]
+
+
+def recognize(in_file_name, out_file_name):
+    recognizing_by_whisper(in_file_name=INFILENAME, out_file_name=OUTFILENAME)
+
+if __name__ == "__main__" and "--no-main" not in sys.argv:
+    print("Распознанный текст:", recognize(INFILENAME, OUTFILENAME))
+
+else:
+    recognize(INFILENAME, OUTFILENAME)

@@ -1,17 +1,33 @@
 import subprocess
 
+#from recording import record
+#from recognize import recognize
+#from 'make paragraphs' import make_paragraphs, par_initialization
 import GLOBAL
 
 def run_recording_and_recognition():
     try:
-        # Отдельная обработка KeyboardInterrupt на этапе записи
-        try:
-            subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recording.py'], check=True)
-        except KeyboardInterrupt:
-            print("Запись прервана пользователем.")
-            return  # Прекратить выполнение распознавания
+        # Запуск записи
+        record_proc = subprocess.run(
+            [GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recording.py', "--no-main"],
+            check=False  # Не вызывать исключение при ненулевом коде
+        )
+        
+        # Если запись прервана (код 130) — прекращаем выполнение
+        if record_proc.returncode == 130:
+            print("Запись прервана. Распознавание отменено.")
+            return
 
-        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recognize.py'], check=True)
+        # Если запись завершилась с другой ошибкой
+        if record_proc.returncode != 0:
+            print(f"Ошибка записи (код {record_proc.returncode})")
+            return
+
+        # Распознавание
+        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recognize.py', "--no-main"], check=True)
+        
+        # Обработка абзацев
+        subprocess.run([GLOBAL.PYTHON_MAKE_PARAGRAPHS, '/home/rostislav/python/note maker/Useful files/make paragraphs.py', "--no-main"], check=True)
 
     except subprocess.CalledProcessError as e:
         print(f"Ошибка выполнения: {e}")
@@ -21,11 +37,14 @@ def run_recording_and_recognition():
 
 def run_realtime_recording_and_recognition():
     try:
-        subprocess.run(GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, ['python', 'recording_and_recognition_realtime.py'], check=True)
+        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, '/home/rostislav/python/note maker/Useful files/recording and recognition in real time.py', "--no-main"], check=True)
+        # Обработка абзацев
+        subprocess.run([GLOBAL.PYTHON_MAKE_PARAGRAPHS, '/home/rostislav/python/note maker/Useful files/make paragraphs.py', "--no-main"], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Ошибка выполнения: {e}")
     except KeyboardInterrupt:
         print("Операция прервана пользователем.")
+
 
 
 def main() -> int:
