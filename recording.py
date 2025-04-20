@@ -3,9 +3,10 @@ import wave
 import sys
 
 FILENAME = "output.wav"
-RATE = 44100
-CHANNELS = 1
 DATATYPE = "int16"
+CHANNELS = 1
+RATE = 16000
+
 CHUNK_DURATION = 1  # Длина записываемого фрагмента в секундах
 
 with wave.open(FILENAME, "wb") as wf:

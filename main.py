@@ -1,5 +1,6 @@
 import subprocess
 
+
 def recording_and_recognize():
     try:
         subprocess.run(['python', 'recording.py'], check=True)
@@ -13,6 +14,7 @@ def recording_and_recognize_in_real_time():
         subprocess.run(['python', 'recording and recognition in real time.py'], check=True)
     except KeyboardInterrupt:
         pass
+
 
 def main() -> int:
     try:

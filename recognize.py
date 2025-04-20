@@ -2,6 +2,7 @@
 import whisper
 
 INFILENAME = 'output.wav'
+#INFILENAME = "/home/rostislav/python/speech recognition/Useful files/Яна монолог.wav"
 
 def recognize_by_google():
 
@@ -23,8 +24,10 @@ def recognize_by_google():
             print(f"Не удалось запросить результаты от Google Speech Recognition; {e}")
 
 def recognize_by_whisper(model_name="base"):
+    print("Распознание начато")
     model = whisper.load_model(model_name)
     result = model.transcribe(INFILENAME, language="ru")
     print("Распознанный текст:", result["text"])
 
 recognize_by_whisper()
+#recognize_by_google()

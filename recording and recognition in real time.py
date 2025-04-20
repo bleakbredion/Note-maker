@@ -1,5 +1,5 @@
+
 import pyaudio
-import numpy as np
 import whisper
 import wave
 import tempfile
@@ -9,8 +9,8 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-RECORD_SECONDS = 8  # Длина фрагмента
-OVERLAP_SECONDS = 0.3  # Перекрытие
+RECORD_SECONDS = 4  # Длина фрагмента
+OVERLAP_SECONDS = 0.5  # Перекрытие
 
 model = whisper.load_model("base")
 
@@ -36,7 +36,8 @@ def record_and_transcribe():
             frames = buffer + frames
 
             # Запоминаем последние OVERLAP_SECONDS для следующего фрагмента
-            buffer = frames[-int(RATE / CHUNK * OVERLAP_SECONDS):]
+            #buffer = frames[-int(RATE / CHUNK * OVERLAP_SECONDS):]
+            buffer = frames[-int(len(frames) * OVERLAP_SECONDS / RECORD_SECONDS):]
 
             with tempfile.NamedTemporaryFile(delete=True, suffix=".wav") as tmpfile:
                 wf = wave.open(tmpfile.name, 'wb')
