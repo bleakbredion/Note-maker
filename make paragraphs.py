@@ -93,8 +93,10 @@ def make_paragraphs(
     # Семантическое объединение
     paragraphs = make_semantic_paragraphs(sentences, semantic_model, threshold=0.75, min_sentences=2)
 
+    print("Структурированнаый текст:", end="")
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(paragraphs))
+        print(paragraphs)
 
 
 if __name__ == "__main__" and "--no-main" not in sys.argv:

@@ -1,15 +1,12 @@
 import subprocess
 
-#from recording import record
-#from recognize import recognize
-#from 'make paragraphs' import make_paragraphs, par_initialization
 import GLOBAL
 
 def run_recording_and_recognition():
     try:
         # Запуск записи
         record_proc = subprocess.run(
-            [GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recording.py', "--no-main"],
+            [GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, '/home/rostislav/python/note maker/Useful files/recording.py', "--no-main"],
             check=False  # Не вызывать исключение при ненулевом коде
         )
         
@@ -24,7 +21,7 @@ def run_recording_and_recognition():
             return
 
         # Распознавание
-        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, 'recognize.py', "--no-main"], check=True)
+        subprocess.run([GLOBAL.PYTHON_RECORDING_AND_RECOGNITION, '/home/rostislav/python/note maker/Useful files/recognize.py', "--no-main"], check=True)
         
         # Обработка абзацев
         subprocess.run([GLOBAL.PYTHON_MAKE_PARAGRAPHS, '/home/rostislav/python/note maker/Useful files/make paragraphs.py', "--no-main"], check=True)
